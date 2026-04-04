@@ -12,12 +12,15 @@ import ProductDetail from "./views/ProductDetail";
 import Cart from "./views/Cart";
 import Checkout from "./views/Checkout";
 import Profile from "./views/Profile";
+import Login from "./views/Login";
+import Register from "./views/Register";
 import { Product, CartItem } from "./types";
 import { AnimatePresence, motion } from "motion/react";
+import { AuthProvider } from "./context/AuthContext";
 
-type View = "home" | "list" | "detail" | "cart" | "checkout" | "profile";
+type View = "home" | "list" | "detail" | "cart" | "checkout" | "profile" | "login" | "register";
 
-export default function App() {
+function AppContent() {
   const [currentView, setCurrentView] = useState<View>("home");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -108,11 +111,21 @@ export default function App() {
               />
             )}
             {currentView === "profile" && <Profile />}
+            {currentView === "login" && <Login onNavigate={handleNavigate} />}
+            {currentView === "register" && <Register onNavigate={handleNavigate} />}
           </motion.div>
         </AnimatePresence>
       </div>
 
       <Footer />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

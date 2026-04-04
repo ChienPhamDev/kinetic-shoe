@@ -1,5 +1,6 @@
-import { ShoppingBag, User, Search, Menu } from "lucide-react";
+import { ShoppingBag, User, Search, Menu, LogIn } from "lucide-react";
 import { cn } from "../lib/utils";
+import { useAuth } from "../context/AuthContext";
 
 interface NavbarProps {
   currentView: string;
@@ -8,6 +9,8 @@ interface NavbarProps {
 }
 
 export default function Navbar({ currentView, onNavigate, cartCount }: NavbarProps) {
+  const { isAuthenticated, user } = useAuth();
+
   const navItems = [
     { name: "Men", id: "men" },
     { name: "Women", id: "women" },
@@ -32,7 +35,7 @@ export default function Navbar({ currentView, onNavigate, cartCount }: NavbarPro
                 onClick={() => onNavigate("list")}
                 className={cn(
                   "font-bold tracking-tight uppercase transition-colors pb-1 border-b-2",
-                  currentView === "list" && item.id === "women" // Mock active state for Women as in screenshot
+                  currentView === "list" && item.id === "women"
                     ? "text-primary border-primary"
                     : "text-stone-600 border-transparent hover:text-stone-900"
                 )}
@@ -47,15 +50,33 @@ export default function Navbar({ currentView, onNavigate, cartCount }: NavbarPro
           <button className="text-stone-600 hover:opacity-80 transition-opacity">
             <Search size={24} />
           </button>
-          <button 
-            onClick={() => onNavigate("profile")}
-            className={cn(
-              "text-stone-600 hover:opacity-80 transition-opacity",
-              currentView === "profile" && "text-primary"
-            )}
-          >
-            <User size={24} />
-          </button>
+          
+          {isAuthenticated ? (
+            <button 
+              onClick={() => onNavigate("profile")}
+              className={cn(
+                "text-stone-600 hover:opacity-80 transition-opacity flex items-center gap-2",
+                currentView === "profile" && "text-primary"
+              )}
+            >
+              <User size={24} />
+              <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">
+                {user.fullName ? user.fullName.split(' ')[0] : 'Member'}
+              </span>
+            </button>
+          ) : (
+            <button 
+              onClick={() => onNavigate("login")}
+              className={cn(
+                "text-stone-600 hover:opacity-80 transition-opacity flex items-center gap-2",
+                currentView === "login" && "text-primary"
+              )}
+            >
+              <LogIn size={24} />
+              <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest text-primary">Join / Sign In</span>
+            </button>
+          )}
+
           <button 
             onClick={() => onNavigate("cart")}
             className="text-stone-600 hover:opacity-80 transition-opacity relative"

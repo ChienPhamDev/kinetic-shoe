@@ -1,13 +1,17 @@
 import { useState } from "react";
-import { User, MapPin, Package, Edit2, Shield, LogOut, ChevronRight, CheckCircle2 } from "lucide-react";
-import { MOCK_USER, MOCK_ORDERS } from "../constants";
+import { User, MapPin, Package, Edit2, LogOut, ChevronRight, CheckCircle2 } from "lucide-react";
+import { MOCK_ORDERS } from "../constants";
 import { cn } from "../lib/utils";
 import { motion } from "motion/react";
+import { useAuth } from "../context/AuthContext";
 
 type ProfileTab = "personal" | "addresses" | "orders";
 
 export default function Profile() {
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
+
+  if (!user) return null;
 
   return (
     <main className="pt-20 min-h-screen bg-white">
@@ -17,12 +21,14 @@ export default function Profile() {
           <div className="flex flex-col items-center md:items-start mb-12">
             <div className="relative mb-4">
               <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-primary p-1">
-                <img src={MOCK_USER.avatar} alt={MOCK_USER.name} className="w-full h-full object-cover rounded-lg bg-stone-100" />
+                <div className="w-full h-full flex items-center justify-center bg-stone-100 rounded-lg text-primary text-2xl font-black uppercase">
+                  {user.fullName.charAt(0)}
+                </div>
               </div>
             </div>
             <div className="text-center md:text-left">
               <h2 className="text-sm font-black uppercase tracking-widest text-on-surface mb-1">Member Profile</h2>
-              <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">{MOCK_USER.status}</p>
+              <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">ELITE MEMBER</p>
             </div>
           </div>
 
@@ -87,28 +93,27 @@ export default function Profile() {
                         <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Legal Name</span>
                         <Edit2 size={14} className="text-stone-300 group-hover:text-primary transition-colors" />
                       </div>
-                      <p className="text-xl font-medium">{MOCK_USER.name}</p>
+                      <p className="text-xl font-medium">{user.fullName}</p>
                     </div>
                     <div className="bg-white p-8 group cursor-pointer hover:bg-stone-50 transition-colors">
                       <div className="flex justify-between items-start mb-4">
                         <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Email Address</span>
                         <Edit2 size={14} className="text-stone-300 group-hover:text-primary transition-colors" />
                       </div>
-                      <p className="text-xl font-medium">{MOCK_USER.email}</p>
+                      <p className="text-xl font-medium">{user.email}</p>
                     </div>
                     <div className="bg-white p-8 group cursor-pointer hover:bg-stone-50 transition-colors">
                       <div className="flex justify-between items-start mb-4">
                         <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Phone Number</span>
                         <Edit2 size={14} className="text-stone-300 group-hover:text-primary transition-colors" />
                       </div>
-                      <p className="text-xl font-medium">{MOCK_USER.phone}</p>
+                      <p className="text-xl font-medium">{user.phone || 'Not provided'}</p>
                     </div>
                     <div className="bg-white p-8 group cursor-pointer hover:bg-stone-50 transition-colors">
                       <div className="flex justify-between items-start mb-4">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Location</span>
-                        <Edit2 size={14} className="text-stone-300 group-hover:text-primary transition-colors" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Member Since</span>
                       </div>
-                      <p className="text-xl font-medium">{MOCK_USER.location}</p>
+                      <p className="text-xl font-medium">{new Date(user.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </section>
@@ -123,7 +128,7 @@ export default function Profile() {
                         <div className="flex justify-between items-center py-4 border-b border-white/10">
                           <div>
                             <p className="text-[10px] font-bold uppercase tracking-widest mb-1">Password</p>
-                            <p className="text-xs text-white/40">Last changed 4 months ago</p>
+                            <p className="text-xs text-white/40">Last changed recently</p>
                           </div>
                           <button className="bg-primary px-6 py-2 rounded font-bold text-[10px] uppercase tracking-widest">Change</button>
                         </div>
@@ -145,7 +150,10 @@ export default function Profile() {
                     </div>
                     <h3 className="text-lg font-black uppercase tracking-tight mb-2">Global Sign Out</h3>
                     <p className="text-xs text-stone-500 mb-8">Instantly log out from all devices across the Kinetic ecosystem.</p>
-                    <button className="w-full border-2 border-stone-200 py-4 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-on-surface hover:text-white hover:border-on-surface transition-all">
+                    <button 
+                      onClick={() => logout()}
+                      className="w-full border-2 border-stone-200 py-4 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-on-surface hover:text-white hover:border-on-surface transition-all"
+                    >
                       Deauthorize All
                     </button>
                   </section>
@@ -198,18 +206,12 @@ export default function Profile() {
                   <div className="absolute top-6 right-6 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Default</div>
                   <h4 className="font-black uppercase tracking-tight mb-4">Home Studio</h4>
                   <p className="text-sm text-stone-600 leading-relaxed">
-                    Julian Sterling<br />
+                    {user.fullName}<br />
                     123 Kinetic Way, Studio 4B<br />
                     New York, NY 10001<br />
                     United States
                   </p>
                   <button className="mt-8 text-[10px] font-black uppercase tracking-widest text-primary border-b-2 border-primary pb-1">Edit Address</button>
-                </div>
-                <div className="border-2 border-dashed border-stone-200 p-8 rounded-2xl flex flex-col items-center justify-center text-center group cursor-pointer hover:border-primary transition-colors">
-                  <div className="w-12 h-12 bg-stone-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors">
-                    <Plus size={20} />
-                  </div>
-                  <p className="font-bold uppercase tracking-widest text-xs">Add New Location</p>
                 </div>
               </motion.div>
             )}
@@ -217,14 +219,5 @@ export default function Profile() {
         </div>
       </div>
     </main>
-  );
-}
-
-function Plus({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
   );
 }
