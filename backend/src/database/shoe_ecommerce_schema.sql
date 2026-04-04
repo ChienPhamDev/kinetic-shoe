@@ -43,7 +43,7 @@ CREATE TABLE sizes (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     region        VARCHAR(10)  NOT NULL,          -- 'EU','US','UK','CM'
     value         NUMERIC(4,1) NOT NULL,          -- 42.0, 9.0, 27.5
-    display_label VARCHAR(20)  NOT NULL,          -- "EU 42" shown to customer
+    display_label VARCHAR(20)  NOT NULL,          -- "EU 42" shown to user
     UNIQUE (region, value)
 );
 
@@ -109,20 +109,29 @@ CREATE INDEX idx_images_product ON product_images(product_id);
 CREATE INDEX idx_images_color   ON product_images(color_id);
 
 -- =============================================================
--- 5. Customers & addresses
+-- 5. users & addresses
 -- =============================================================
 
-CREATE TABLE customers (
+CREATE TYPE user_role AS ENUM (
+    'admin',
+    'user',
+    'editor'
+);
+
+CREATE TABLE users (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email      VARCHAR(254) NOT NULL UNIQUE,
     full_name  VARCHAR(200) NOT NULL,
     phone      VARCHAR(30),
-    created_at TIMESTAMPTZ  NOT NULL DEFAULT now()
+    status     VARCHAR(20)  NOT NULL DEFAULT 'active',
+    role       user_role    NOT NULL DEFAULT 'user',
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 CREATE TABLE addresses (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    customer_id  UUID         NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    user_id  UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     label        VARCHAR(50)  NOT NULL DEFAULT 'Home',   -- "Home", "Work", etc.
     street_line1 TEXT         NOT NULL,
     street_line2 TEXT,
@@ -133,7 +142,7 @@ CREATE TABLE addresses (
     is_default   BOOLEAN      NOT NULL DEFAULT false
 );
 
-CREATE INDEX idx_addresses_customer ON addresses(customer_id);
+CREATE INDEX idx_addresses_user ON addresses(user_id);
 
 -- =============================================================
 -- 6. Orders
@@ -151,7 +160,7 @@ CREATE TYPE order_status AS ENUM (
 
 CREATE TABLE orders (
     id                  UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-    customer_id         UUID         NOT NULL REFERENCES customers(id),
+    user_id         UUID         NOT NULL REFERENCES users(id),
     shipping_address_id UUID         NOT NULL REFERENCES addresses(id),
     status              order_status NOT NULL DEFAULT 'pending',
     subtotal            NUMERIC(12,2) NOT NULL CHECK (subtotal >= 0),
@@ -163,7 +172,7 @@ CREATE TABLE orders (
     updated_at          TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_orders_customer ON orders(customer_id);
+CREATE INDEX idx_orders_user ON orders(user_id);
 CREATE INDEX idx_orders_status   ON orders(status);
 CREATE INDEX idx_orders_placed   ON orders(placed_at DESC);
 
@@ -239,7 +248,7 @@ CREATE UNIQUE INDEX idx_primary_image_per_color
     ON product_images(product_id, color_id)
     WHERE is_primary = true;
 
--- Enforce at most one default address per customer
-CREATE UNIQUE INDEX idx_default_address_per_customer
-    ON addresses(customer_id)
+-- Enforce at most one default address per user
+CREATE UNIQUE INDEX idx_default_address_per_user
+    ON addresses(user_id)
     WHERE is_default = true;
