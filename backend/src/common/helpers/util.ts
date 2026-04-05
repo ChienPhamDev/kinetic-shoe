@@ -11,3 +11,7 @@ export const comparePassword = async (
 ): Promise<boolean> => {
   return await bcrypt.compare(password, hash);
 };
+
+export const isDevelopment = () => {
+  return process.env.ENVIRONMENT === 'development';
+};

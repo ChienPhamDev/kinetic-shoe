@@ -6,6 +6,10 @@ import { AppService } from './app.service';
 import { UsersModule } from '@/modules/users/users.module';
 import { AuthModule } from '@/auth/auth.module';
 import { LoggerMiddleware } from '@/common/middleware/logger.middleware';
+import { AuthGuard } from './auth/auth.guard';
+import { RolesGuard } from './auth/roles.guard';
+import { APP_GUARD } from '@nestjs/core';
+import { isDevelopment } from './common/helpers/util';
 
 @Module({
   imports: [
@@ -23,6 +27,8 @@ import { LoggerMiddleware } from '@/common/middleware/logger.middleware';
         database: configService.get<string>('DB_DATABASE'),
         autoLoadEntities: true,
         synchronize: true, // Be careful with this in production!
+
+        logging: true,
       }),
       inject: [ConfigService],
     }),
@@ -30,7 +36,17 @@ import { LoggerMiddleware } from '@/common/middleware/logger.middleware';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
