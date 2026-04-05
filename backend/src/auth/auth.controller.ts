@@ -8,9 +8,8 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { LoginAuthDto } from './dto/login-auth.dto';
-import { AuthGuard } from './auth.guard';
 import { Public } from '@/common/decorators/public.decorator';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,9 +22,10 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(LocalAuthGuard)
   @Post('login')
-  login(@Body() loginAuthDto: LoginAuthDto) {
-    return this.authService.signIn(loginAuthDto);
+  login(@Request() req: any) {
+    return req.user;
   }
 
   @Get('profile')

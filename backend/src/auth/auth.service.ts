@@ -1,7 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UsersService } from '@/modules/users/users.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
-import { LoginAuthDto } from './dto/login-auth.dto';
 import { comparePassword } from '@/common/helpers/util';
 import { JwtService } from '@nestjs/jwt';
 @Injectable()
@@ -15,24 +14,15 @@ export class AuthService {
     return await this.usersService.create(createAuthDto);
   }
 
-  async signIn(loginAuthDto: LoginAuthDto) {
-    const { email, password } = loginAuthDto;
+  async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByEmail(email);
-    if (!user) {
-      throw new BadRequestException('User not found');
+    if (user) {
+      const isPasswordValid = await comparePassword(pass, user.password);
+      if (isPasswordValid) {
+        const { password, ...result } = user;
+        return result;
+      }
     }
-    const isPasswordValid = await comparePassword(password, user.password);
-    if (!isPasswordValid) {
-      throw new BadRequestException('Invalid password');
-    }
-
-    const payload = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const token = await this.jwtService.signAsync(payload);
-    return { ...payload, token };
+    return null;
   }
 }

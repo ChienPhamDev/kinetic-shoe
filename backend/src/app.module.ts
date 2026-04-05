@@ -6,10 +6,9 @@ import { AppService } from './app.service';
 import { UsersModule } from '@/modules/users/users.module';
 import { AuthModule } from '@/auth/auth.module';
 import { LoggerMiddleware } from '@/common/middleware/logger.middleware';
-import { AuthGuard } from './auth/auth.guard';
-import { RolesGuard } from './auth/roles.guard';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 import { APP_GUARD } from '@nestjs/core';
-import { isDevelopment } from './common/helpers/util';
 
 @Module({
   imports: [
@@ -40,7 +39,7 @@ import { isDevelopment } from './common/helpers/util';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: AuthGuard,
+      useClass: JwtAuthGuard,
     },
     {
       provide: APP_GUARD,
