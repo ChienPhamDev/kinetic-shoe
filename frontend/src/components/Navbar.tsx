@@ -51,7 +51,7 @@ export default function Navbar({ currentView, onNavigate, cartCount }: NavbarPro
             <Search size={24} />
           </button>
           
-          {isAuthenticated ? (
+          {isAuthenticated && user ? (
             <button 
               onClick={() => onNavigate("profile")}
               className={cn(
@@ -59,10 +59,13 @@ export default function Navbar({ currentView, onNavigate, cartCount }: NavbarPro
                 currentView === "profile" && "text-primary"
               )}
             >
+              <div className="flex flex-col items-end">
+                <span className="text-[8px] font-black uppercase tracking-widest text-primary leading-none">Hi, Welcome</span>
+                <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">
+                  {user.fullName ? user.fullName.split(' ')[0] : 'Member'}
+                </span>
+              </div>
               <User size={24} />
-              <span className="hidden lg:block text-[10px] font-black uppercase tracking-widest">
-                {user.fullName ? user.fullName.split(' ')[0] : 'Member'}
-              </span>
             </button>
           ) : (
             <button 

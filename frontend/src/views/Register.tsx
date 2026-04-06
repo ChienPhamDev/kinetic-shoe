@@ -37,16 +37,32 @@ export default function Register({ onNavigate }: RegisterProps) {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.post('/auth/register', data);
+      await axios.post('/auth/register', data);
+      
       // Auto login after registration
       const loginResponse = await axios.post('/auth/login', {
         email: data.email,
         password: data.password,
       });
-      authRegister(loginResponse.data.access_token, loginResponse.data.user);
-      onNavigate('home');
+
+      if (loginResponse.data?.access_token) {
+        const { access_token, ...userData } = loginResponse.data;
+        authRegister(access_token, userData as any);
+        onNavigate('home');
+      } else {
+        throw new Error('Login failed after registration');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      console.error('Registration/Login error:', err);
+      const backendMessage = err.response?.data?.message;
+      
+      if (Array.isArray(backendMessage)) {
+        setError(backendMessage[0]); // Show the first validation error
+      } else if (typeof backendMessage === 'string') {
+        setError(backendMessage);
+      } else {
+        setError(err.message || 'Registration failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -66,8 +82,8 @@ export default function Register({ onNavigate }: RegisterProps) {
           <div className="relative z-10">
             <header className="mb-10 text-center md:text-left">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block">Join the Collective</span>
-              <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Create Identity</h1>
-              <p className="text-stone-500 text-sm">Unlock personalized performance tracking and elite access.</p>
+              <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Register</h1>
+              {/* <p className="text-stone-500 text-sm">Unlock personalized performance tracking and elite access.</p> */}
             </header>
 
             {error && (
@@ -111,7 +127,7 @@ export default function Register({ onNavigate }: RegisterProps) {
                 {errors.email && <p className="text-red-500 text-[10px] font-black uppercase tracking-tight ml-4">{errors.email.message}</p>}
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-stone-400">
                     <Phone size={18} />
@@ -123,7 +139,7 @@ export default function Register({ onNavigate }: RegisterProps) {
                     className="w-full bg-stone-50 border-2 border-stone-50 rounded-2xl py-4 pl-14 pr-5 text-sm font-bold uppercase tracking-widest placeholder:text-stone-300 focus:bg-white focus:border-primary focus:outline-none transition-all"
                   />
                 </div>
-              </div>
+              </div> */}
 
               <div className="space-y-2">
                 <div className="relative">
@@ -150,7 +166,7 @@ export default function Register({ onNavigate }: RegisterProps) {
                     <Loader2 size={18} className="animate-spin" />
                   ) : (
                     <>
-                      Construct Profile
+                      Create Account
                       <ArrowRight size={18} />
                     </>
                   )}
@@ -159,12 +175,12 @@ export default function Register({ onNavigate }: RegisterProps) {
             </form>
 
             <footer className="mt-10 text-center">
-              <p className="text-sm text-stone-500 mb-4">Already part of the collective?</p>
+              {/* <p className="text-sm text-stone-500 mb-4">Already part of the collective?</p> */}
               <button
                 onClick={() => onNavigate('login')}
                 className="text-[10px] font-black uppercase tracking-widest text-primary border-b-2 border-primary pb-1 hover:text-on-surface hover:border-on-surface transition-all"
               >
-                Sign In to Member Portal
+                Already have an account? Sign In
               </button>
             </footer>
           </div>

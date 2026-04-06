@@ -36,7 +36,8 @@ export default function Login({ onNavigate }: LoginProps) {
     setError(null);
     try {
       const response = await axios.post('/auth/login', data);
-      login(response.data.access_token, response.data.user);
+      const { access_token, ...userData } = response.data;
+      login(access_token, userData as any);
       onNavigate('home');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
@@ -60,7 +61,7 @@ export default function Login({ onNavigate }: LoginProps) {
             <header className="mb-10">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block">Premium Access</span>
               <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Welcome Back</h1>
-              <p className="text-stone-500 text-sm">Sign in to your elite member account.</p>
+              {/* <p className="text-stone-500 text-sm">Sign in to your elite member account.</p> */}
             </header>
 
             {error && (
@@ -119,7 +120,7 @@ export default function Login({ onNavigate }: LoginProps) {
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
                   <>
-                    Authorize Account
+                    Login
                     <ArrowRight size={18} />
                   </>
                 )}
@@ -127,12 +128,12 @@ export default function Login({ onNavigate }: LoginProps) {
             </form>
 
             <footer className="mt-10 text-center">
-              <p className="text-sm text-stone-500 mb-4">New to the ecosystem?</p>
+              {/* <p className="text-sm text-stone-500 mb-4">New to the ecosystem?</p> */}
               <button
                 onClick={() => onNavigate('register')}
                 className="text-[10px] font-black uppercase tracking-widest text-primary border-b-2 border-primary pb-1 hover:text-on-surface hover:border-on-surface transition-all"
               >
-                Create Member Identity
+                Register
               </button>
             </footer>
           </div>
