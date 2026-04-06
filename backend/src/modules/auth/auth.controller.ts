@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { Public } from '@/common/decorators/public.decorator';
 import { LocalAuthGuard } from './guards/local-auth.guard';
+import { User } from '@/modules/users/entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -24,12 +25,12 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  login(@Request() req: any) {
-    return req.user;
+  login(@Request() req: { user: User }) {
+    return this.authService.login(req.user);
   }
 
   @Get('profile')
-  profile(@Request() req: any) {
+  profile(@Request() req: { user: User }) {
     return req.user;
   }
 }
