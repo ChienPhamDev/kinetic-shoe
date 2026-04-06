@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 
 interface ProductCardProps {
   product: Product;
-  onClick: (product: Product) => void;
+  onClick?: (product: Product) => void;
 }
 
 export default function ProductCard({ product, onClick }: ProductCardProps) {
@@ -15,7 +15,7 @@ export default function ProductCard({ product, onClick }: ProductCardProps) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       className="group cursor-pointer"
-      onClick={() => onClick(product)}
+      onClick={() => onClick?.(product)}
     >
       <div className="aspect-[4/5] bg-surface-container-low mb-6 relative overflow-hidden flex items-center justify-center p-8">
         <img 

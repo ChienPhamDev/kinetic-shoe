@@ -1,13 +1,9 @@
 import { ChevronDown } from "lucide-react";
 import { PRODUCTS } from "../constants";
 import ProductCard from "../components/ProductCard";
-import { Product } from "../types";
+import { Link } from "react-router-dom";
 
-interface ProductListProps {
-  onNavigate: (view: string, data?: any) => void;
-}
-
-export default function ProductList({ onNavigate }: ProductListProps) {
+export default function ProductList() {
   return (
     <main className="pt-32 pb-20 px-8 max-w-[1600px] mx-auto">
       <section className="mb-16">
@@ -82,11 +78,13 @@ export default function ProductList({ onNavigate }: ProductListProps) {
         <div className="flex-grow">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-y-16 gap-x-8">
             {PRODUCTS.map((product) => (
-              <ProductCard key={product.id} product={product} onClick={(p) => onNavigate("detail", p)} />
+              <Link key={product.id} to={`/product/${product.id}`} className="block">
+                <ProductCard product={product} />
+              </Link>
             ))}
           </div>
           <div className="mt-24 text-center">
-            <button className="px-12 py-5 border-2 border-on-surface font-bold text-sm uppercase tracking-[0.3em] hover:bg-on-surface hover:text-on-primary transition-all duration-300">
+            <button className="px-12 py-5 border-2 border-on-surface font-bold text-sm uppercase tracking-[0.3em] hover:bg-on-surface hover:text-on-primary transition-all duration-300 shadow-xl shadow-stone-100">
               Load More Designs
             </button>
           </div>

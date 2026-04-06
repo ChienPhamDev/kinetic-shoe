@@ -4,12 +4,19 @@ import { MOCK_ORDERS } from "../constants";
 import { cn } from "../lib/utils";
 import { motion } from "motion/react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 type ProfileTab = "personal" | "addresses" | "orders";
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ProfileTab>("personal");
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   if (!user) return null;
 
@@ -146,12 +153,12 @@ export default function Profile() {
 
                   <section className="bg-stone-50 rounded-2xl p-10 flex flex-col items-center justify-center text-center">
                     <div className="w-16 h-16 bg-stone-200 rounded-xl flex items-center justify-center mb-6">
-                      <LogOut size={24} className="text-stone-500" />
+                      <LogOut onClick={handleLogout} size={24} className="text-stone-500" />
                     </div>
                     <h3 className="text-lg font-black uppercase tracking-tight mb-2">Global Sign Out</h3>
                     <p className="text-xs text-stone-500 mb-8">Instantly log out from all devices across the Kinetic ecosystem.</p>
                     <button 
-                      onClick={() => logout()}
+                      onClick={handleLogout}
                       className="w-full border-2 border-stone-200 py-4 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-on-surface hover:text-white hover:border-on-surface transition-all"
                     >
                       Deauthorize All

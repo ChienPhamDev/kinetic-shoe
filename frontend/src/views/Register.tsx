@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { UserPlus, Mail, Lock, User, Phone, Loader2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from '../lib/axios';
+import { useNavigate, Link } from 'react-router-dom';
 
 const registerSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -16,12 +17,9 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-interface RegisterProps {
-  onNavigate: (view: any) => void;
-}
-
-export default function Register({ onNavigate }: RegisterProps) {
+export default function Register() {
   const { register: authRegister } = useAuth();
+  const navigate = useNavigate();
   const [error, setError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -48,7 +46,7 @@ export default function Register({ onNavigate }: RegisterProps) {
       if (loginResponse.data?.access_token) {
         const { access_token, ...userData } = loginResponse.data;
         authRegister(access_token, userData as any);
-        onNavigate('home');
+        navigate('/');
       } else {
         throw new Error('Login failed after registration');
       }
@@ -57,7 +55,7 @@ export default function Register({ onNavigate }: RegisterProps) {
       const backendMessage = err.response?.data?.message;
       
       if (Array.isArray(backendMessage)) {
-        setError(backendMessage[0]); // Show the first validation error
+        setError(backendMessage[0]); 
       } else if (typeof backendMessage === 'string') {
         setError(backendMessage);
       } else {
@@ -83,7 +81,6 @@ export default function Register({ onNavigate }: RegisterProps) {
             <header className="mb-10 text-center md:text-left">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block">Join the Collective</span>
               <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Register</h1>
-              {/* <p className="text-stone-500 text-sm">Unlock personalized performance tracking and elite access.</p> */}
             </header>
 
             {error && (
@@ -127,20 +124,6 @@ export default function Register({ onNavigate }: RegisterProps) {
                 {errors.email && <p className="text-red-500 text-[10px] font-black uppercase tracking-tight ml-4">{errors.email.message}</p>}
               </div>
 
-              {/* <div className="space-y-2">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-stone-400">
-                    <Phone size={18} />
-                  </div>
-                  <input
-                    {...register('phone')}
-                    type="tel"
-                    placeholder="PHONE (OPTIONAL)"
-                    className="w-full bg-stone-50 border-2 border-stone-50 rounded-2xl py-4 pl-14 pr-5 text-sm font-bold uppercase tracking-widest placeholder:text-stone-300 focus:bg-white focus:border-primary focus:outline-none transition-all"
-                  />
-                </div>
-              </div> */}
-
               <div className="space-y-2">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-stone-400">
@@ -175,13 +158,12 @@ export default function Register({ onNavigate }: RegisterProps) {
             </form>
 
             <footer className="mt-10 text-center">
-              {/* <p className="text-sm text-stone-500 mb-4">Already part of the collective?</p> */}
-              <button
-                onClick={() => onNavigate('login')}
+              <Link
+                to="/login"
                 className="text-[10px] font-black uppercase tracking-widest text-primary border-b-2 border-primary pb-1 hover:text-on-surface hover:border-on-surface transition-all"
               >
                 Already have an account? Sign In
-              </button>
+              </Link>
             </footer>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { LogIn as LoginIcon, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from '../lib/axios';
+import { useNavigate, Link } from 'react-router-dom';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -14,12 +15,9 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-interface LoginProps {
-  onNavigate: (view: any) => void;
-}
-
-export default function Login({ onNavigate }: LoginProps) {
+export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [error, setError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -38,7 +36,7 @@ export default function Login({ onNavigate }: LoginProps) {
       const response = await axios.post('/auth/login', data);
       const { access_token, ...userData } = response.data;
       login(access_token, userData as any);
-      onNavigate('home');
+      navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -61,7 +59,6 @@ export default function Login({ onNavigate }: LoginProps) {
             <header className="mb-10">
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-2 block">Premium Access</span>
               <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">Welcome Back</h1>
-              {/* <p className="text-stone-500 text-sm">Sign in to your elite member account.</p> */}
             </header>
 
             {error && (
@@ -128,13 +125,12 @@ export default function Login({ onNavigate }: LoginProps) {
             </form>
 
             <footer className="mt-10 text-center">
-              {/* <p className="text-sm text-stone-500 mb-4">New to the ecosystem?</p> */}
-              <button
-                onClick={() => onNavigate('register')}
+              <Link
+                to="/register"
                 className="text-[10px] font-black uppercase tracking-widest text-primary border-b-2 border-primary pb-1 hover:text-on-surface hover:border-on-surface transition-all"
               >
                 Register
-              </button>
+              </Link>
             </footer>
           </div>
         </div>

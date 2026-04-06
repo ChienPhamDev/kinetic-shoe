@@ -1,9 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./views/Home";
@@ -18,24 +14,18 @@ import { Product, CartItem } from "./types";
 import { AnimatePresence, motion } from "motion/react";
 import { AuthProvider } from "./context/AuthContext";
 
-type View = "home" | "list" | "detail" | "cart" | "checkout" | "profile" | "login" | "register";
-
-function AppContent() {
-  const [currentView, setCurrentView] = useState<View>("home");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
-
-  // Scroll to top on view change
+// ScrollToTop component to reset scroll position on route change
+function ScrollToTop() {
+  const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [currentView]);
+  }, [pathname]);
+  return null;
+}
 
-  const handleNavigate = (view: string, data?: any) => {
-    if (view === "detail" && data) {
-      setSelectedProduct(data);
-    }
-    setCurrentView(view as View);
-  };
+function AppContent() {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const location = useLocation();
 
   const addToCart = (product: Product, size: string) => {
     setCart((prev) => {
@@ -49,7 +39,6 @@ function AppContent() {
       }
       return [...prev, { ...product, quantity: 1, selectedSize: size }];
     });
-    setCurrentView("cart");
   };
 
   const updateQuantity = (id: string, size: string, delta: number) => {
@@ -71,51 +60,46 @@ function AppContent() {
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar 
-        currentView={currentView} 
-        onNavigate={handleNavigate} 
-        cartCount={cartCount} 
-      />
+    <div className="min-h-screen flex flex-col font-sans selection:bg-primary/20">
+      <ScrollToTop />
+      <Navbar cartCount={cartCount} />
 
-      <div className="flex-grow">
+      <main className="flex-grow">
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentView}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
           >
-            {currentView === "home" && <Home onNavigate={handleNavigate} />}
-            {currentView === "list" && <ProductList onNavigate={handleNavigate} />}
-            {currentView === "detail" && selectedProduct && (
-              <ProductDetail product={selectedProduct} onAddToCart={addToCart} />
-            )}
-            {currentView === "cart" && (
-              <Cart 
-                items={cart} 
-                onUpdateQuantity={updateQuantity} 
-                onRemove={removeFromCart} 
-                onCheckout={() => setCurrentView("checkout")}
-              />
-            )}
-            {currentView === "checkout" && (
-              <Checkout 
-                items={cart} 
-                onComplete={() => {
-                  alert("Purchase Complete! Thank you for shopping with KINETIC.");
-                  setCart([]);
-                  setCurrentView("home");
-                }} 
-              />
-            )}
-            {currentView === "profile" && <Profile />}
-            {currentView === "login" && <Login onNavigate={handleNavigate} />}
-            {currentView === "register" && <Register onNavigate={handleNavigate} />}
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/shop" element={<ProductList />} />
+              <Route path="/product/:id" element={<ProductDetail onAddToCart={addToCart} />} />
+              <Route path="/cart" element={
+                <Cart 
+                  items={cart} 
+                  onUpdateQuantity={updateQuantity} 
+                  onRemove={removeFromCart} 
+                />
+              } />
+              <Route path="/checkout" element={
+                <Checkout 
+                  items={cart} 
+                  onComplete={() => {
+                    alert("Purchase Complete! Thank you for shopping with KINETIC.");
+                    setCart([]);
+                  }} 
+                />
+              } />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Routes>
           </motion.div>
         </AnimatePresence>
-      </div>
+      </main>
 
       <Footer />
     </div>
@@ -125,7 +109,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <Router>
+        <AppContent />
+      </Router>
     </AuthProvider>
   );
 }
