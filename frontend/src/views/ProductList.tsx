@@ -1,9 +1,106 @@
-import { ChevronDown } from "lucide-react";
-import { PRODUCTS } from "../constants";
+import { useEffect, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import { Link } from "react-router-dom";
+import { 
+  fetchProducts, 
+  fetchBrands, 
+  fetchColors, 
+  fetchSizes 
+} from "../lib/api";
+import { 
+  Product, 
+  Brand, 
+  Category,
+  Color, 
+  Size, 
+  PaginatedResponse 
+} from "../types";
+
 
 export default function ProductList() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [meta, setMeta] = useState<PaginatedResponse<Product>["meta"] | null>(null);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [colors, setColors] = useState<Color[]>([]);
+  const [sizes, setSizes] = useState<Size[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [filters, setFilters] = useState({
+    brandId: "",
+    colorId: "",
+    sizeId: "",
+    minPrice: 0,
+    maxPrice: 1000,
+    page: 1,
+    limit: 9
+  });
+
+  useEffect(() => {
+    const loadLookupData = async () => {
+      try {
+        const [brandsData, colorsData, sizesData] = await Promise.all([
+          fetchBrands(),
+          fetchColors(),
+          fetchSizes()
+        ]);
+        setBrands(brandsData);
+        setColors(colorsData);
+        setSizes(sizesData);
+      } catch (error) {
+        console.error("Error loading filters:", error);
+      }
+    };
+    loadLookupData();
+  }, []);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      try {
+        const response = await fetchProducts(filters);
+        // Map backend entities to UI-friendly format
+        const mappedData = response.data.map(p => ({
+          ...p,
+          category: (p.category as Category)?.name || "Uncategorized",
+          // Calculate min price from variants
+          price: p.variants?.length > 0 
+            ? Math.min(...p.variants.map(v => Number(v.price))) 
+            : 0,
+          // Find primary image or use first
+          image: p.images?.find(img => img.is_primary)?.url || p.images?.[0]?.url || "",
+          rating: 4.5, // Placeholder for now
+          reviewsCount: 120 // Placeholder for now
+        }));
+        setProducts(mappedData);
+
+        setMeta(response.meta);
+      } catch (error) {
+        console.error("Error loading products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProducts();
+  }, [filters]);
+
+  const handlePageChange = (newPage: number) => {
+    setFilters(prev => ({ ...prev, page: newPage }));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const toggleBrand = (id: string) => {
+    setFilters(prev => ({ ...prev, brandId: prev.brandId === id ? "" : id, page: 1 }));
+  };
+
+  const toggleSize = (id: string) => {
+    setFilters(prev => ({ ...prev, sizeId: prev.sizeId === id ? "" : id, page: 1 }));
+  };
+
+  const selectColor = (id: string) => {
+    setFilters(prev => ({ ...prev, colorId: prev.colorId === id ? "" : id, page: 1 }));
+  };
+
   return (
     <main className="pt-32 pb-20 px-8 max-w-[1600px] mx-auto">
       <section className="mb-16">
@@ -33,20 +130,29 @@ export default function ProductList() {
             <div className="space-y-4">
               <h4 className="uppercase tracking-widest text-xs font-bold text-on-surface-variant">Brand</h4>
               <div className="space-y-3">
-                {["Kinetic Lab", "AeroStride", "Vortex Series"].map((brand) => (
-                  <label key={brand} className="flex items-center gap-3 cursor-pointer group">
-                    <input type="checkbox" className="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" defaultChecked={brand === "Kinetic Lab"} />
-                    <span className="text-sm group-hover:text-primary transition-colors">{brand}</span>
+                {brands.map((brand) => (
+                  <label key={brand.id} className="flex items-center gap-3 cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" 
+                      checked={filters.brandId === brand.id}
+                      onChange={() => toggleBrand(brand.id)}
+                    />
+                    <span className="text-sm group-hover:text-primary transition-colors">{brand.name}</span>
                   </label>
                 ))}
               </div>
             </div>
             <div className="space-y-4">
-              <h4 className="uppercase tracking-widest text-xs font-bold text-on-surface-variant">Size (US)</h4>
+              <h4 className="uppercase tracking-widest text-xs font-bold text-on-surface-variant">Size (Metric)</h4>
               <div className="grid grid-cols-4 gap-2">
-                {["7", "7.5", "8", "8.5", "9", "10", "11", "12"].map((size) => (
-                  <button key={size} className={`h-10 text-xs font-bold transition-colors ${size === "7" ? "bg-on-surface text-on-primary" : "bg-surface-container-high hover:bg-surface-container-highest"}`}>
-                    {size}
+                {sizes.map((size) => (
+                  <button 
+                    key={size.id} 
+                    onClick={() => toggleSize(size.id)}
+                    className={`h-10 text-xs font-bold transition-colors ${filters.sizeId === size.id ? "bg-on-surface text-on-primary" : "bg-surface-container-high hover:bg-surface-container-highest"}`}
+                  >
+                    {size.value}
                   </button>
                 ))}
               </div>
@@ -54,40 +160,94 @@ export default function ProductList() {
             <div className="space-y-4">
               <h4 className="uppercase tracking-widest text-xs font-bold text-on-surface-variant">Color Way</h4>
               <div className="flex flex-wrap gap-3">
-                {["#1c1b1b", "#ffffff", "#ff6b00", "#0062a1", "#8e7164"].map((color, i) => (
+                {colors.map((color) => (
                   <button 
-                    key={color} 
-                    className={`w-8 h-8 rounded-full ring-offset-2 ${i === 0 ? "ring-2 ring-primary" : ""} ${color === "#ffffff" ? "border border-stone-200" : ""}`}
-                    style={{ backgroundColor: color }}
+                    key={color.id} 
+                    onClick={() => selectColor(color.id)}
+                    className={`w-8 h-8 rounded-full ring-offset-2 ${filters.colorId === color.id ? "ring-2 ring-primary" : ""} ${color.hex_code.toLowerCase() === "#ffffff" ? "border border-stone-200" : ""}`}
+                    style={{ backgroundColor: color.hex_code }}
+                    title={color.name}
                   />
                 ))}
               </div>
             </div>
             <div className="space-y-4">
               <h4 className="uppercase tracking-widest text-xs font-bold text-on-surface-variant">Price Range</h4>
-              <input type="range" className="w-full h-1 bg-surface-container-highest appearance-none cursor-pointer accent-primary" />
+              <input 
+                type="range" 
+                min="0"
+                max="2000"
+                value={filters.maxPrice}
+                onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: parseInt(e.target.value), page: 1 }))}
+                className="w-full h-1 bg-surface-container-highest appearance-none cursor-pointer accent-primary" 
+              />
               <div className="flex justify-between text-[10px] font-bold uppercase tracking-tighter">
-                <span>$120</span>
-                <span>$450</span>
+                <span>$0</span>
+                <span>${filters.maxPrice}</span>
               </div>
             </div>
-            <button className="w-full kinetic-gradient py-4 text-on-primary font-bold text-xs uppercase tracking-widest">Apply Filters</button>
           </div>
         </aside>
 
         <div className="flex-grow">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-y-16 gap-x-8">
-            {PRODUCTS.map((product) => (
-              <Link key={product.id} to={`/product/${product.id}`} className="block">
-                <ProductCard product={product} />
-              </Link>
-            ))}
-          </div>
-          <div className="mt-24 text-center">
-            <button className="px-12 py-5 border-2 border-on-surface font-bold text-sm uppercase tracking-[0.3em] hover:bg-on-surface hover:text-on-primary transition-all duration-300 shadow-xl shadow-stone-100">
-              Load More Designs
-            </button>
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-y-16 gap-x-8 animate-pulse">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="aspect-[4/5] bg-surface-container-low" />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-y-16 gap-x-8">
+                {products.length > 0 ? (
+                  products.map((product) => (
+                    <Link key={product.id} to={`/product/${product.id}`} className="block">
+                      <ProductCard product={product} />
+                    </Link>
+                  ))
+                ) : (
+                  <div className="col-span-full py-20 text-center">
+                    <p className="text-secondary uppercase tracking-[0.3em] font-bold">No silhouettes found matching your criteria</p>
+                  </div>
+                )}
+              </div>
+              
+              {meta && meta.lastPage > 1 && (
+                <div className="mt-24 flex items-center justify-center gap-4">
+                  <button 
+                    disabled={filters.page === 1}
+                    onClick={() => handlePageChange(filters.page - 1)}
+                    className="w-12 h-12 flex items-center justify-center border-2 border-on-surface disabled:opacity-30 transition-opacity"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  
+                  <div className="flex items-center gap-2">
+                    {[...Array(meta.lastPage)].map((_, i) => {
+                      const pageNum = i + 1;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-12 h-12 font-bold text-sm transition-colors ${filters.page === pageNum ? "bg-on-surface text-on-primary" : "hover:bg-surface-container-highest"}`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button 
+                    disabled={filters.page === meta.lastPage}
+                    onClick={() => handlePageChange(filters.page + 1)}
+                    className="w-12 h-12 flex items-center justify-center border-2 border-on-surface disabled:opacity-30 transition-opacity"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </main>

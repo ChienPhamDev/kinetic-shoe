@@ -1,17 +1,64 @@
+export interface Brand {
+  id: string;
+  name: string;
+  description?: string;
+  logo_url?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  parent_id?: string;
+}
+
+export interface Color {
+  id: string;
+  name: string;
+  hex_code: string;
+}
+
+export interface Size {
+  id: string;
+  region: string;
+  value: number;
+  display_label: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  color: Color;
+  size: Size;
+  sku: string;
+  price: number;
+  compare_at_price?: number;
+  stock_quantity: number;
+}
+
 export interface Product {
   id: string;
   name: string;
-  category: string;
-  price: number;
-  rating: number;
-  reviewsCount: number;
+  brand: Brand;
+  category: Category | string;
   description: string;
-  image: string;
-  thumbnails: string[];
-  isNew?: boolean;
-  isLimited?: boolean;
-  colors: string[];
-  sizes: string[];
+  gender: string;
+  variants: ProductVariant[];
+  images?: { url: string; is_primary: boolean }[];
+  created_at: string;
+  // UI helpers
+  image?: string;
+  rating?: number;
+  reviewsCount?: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    lastPage: number;
+  };
 }
 
 export interface CartItem extends Product {
