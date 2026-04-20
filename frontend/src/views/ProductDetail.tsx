@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Star, Heart, ChevronLeft, ChevronRight, Ruler, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Star, Heart, ChevronLeft, ChevronRight, Ruler, Loader2, ShoppingBag, Check } from "lucide-react";
 import { useParams, Link } from "react-router-dom";
-import { motion } from "motion/react";
-import { Product, ProductVariant } from "../types";
+import { motion, AnimatePresence } from "motion/react";
+import { Product } from "../types";
 import { fetchProductBySlug } from "../lib/api";
 import { cn } from "../lib/utils";
 
@@ -18,6 +18,8 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColorId, setSelectedColorId] = useState<string>("");
   const [activeThumb, setActiveThumb] = useState(0);
+  const [isAdded, setIsAdded] = useState(false);
+  const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     async function loadProduct() {
@@ -234,14 +236,73 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
 
             {/* Actions */}
             <div className="space-y-4 mt-auto">
-              <button 
-                onClick={() => selectedSize && onAddToCart(product, selectedSize)}
-                disabled={!selectedSize}
-                className="w-full h-18 bg-stone-950 text-white rounded-full font-black uppercase tracking-widest text-xs hover:bg-primary transition-all disabled:opacity-50 disabled:hover:bg-stone-950 shadow-2xl shadow-stone-950/20 active:scale-[0.98]"
+              <button
+                id="add-to-cart-btn"
+                onClick={() => {
+                  if (!selectedSize || !product) return;
+                  // Enrich product with active variant price before adding
+                  const enriched = { ...product, price: Number(activeVariant?.price || product.price || 0) };
+                  onAddToCart(enriched, selectedSize);
+                  setIsAdded(true);
+                  if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
+                  addedTimerRef.current = setTimeout(() => setIsAdded(false), 2500);
+                }}
+                disabled={!selectedSize || isAdded}
+                className={cn(
+                  "w-full py-5 rounded-full font-black uppercase tracking-widest text-xs transition-all shadow-2xl active:scale-[0.98] flex items-center justify-center gap-3",
+                  isAdded
+                    ? "bg-primary text-white shadow-primary/20 scale-[0.99]"
+                    : "bg-stone-950 text-white hover:bg-primary shadow-stone-950/20 disabled:opacity-50 disabled:hover:bg-stone-950"
+                )}
               >
-                Assemble to Bag
+                <AnimatePresence mode="wait">
+                  {isAdded ? (
+                    <motion.span
+                      key="added"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="flex items-center gap-2"
+                    >
+                      <Check size={16} />
+                      Added to Bag!
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="add"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="flex items-center gap-2"
+                    >
+                      <ShoppingBag size={16} />
+                      {selectedSize ? "Assemble to Bag" : "Select a Size"}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </button>
-              <button className="w-full h-18 border-2 border-stone-100 rounded-full font-black uppercase tracking-widest text-xs hover:border-stone-300 transition-all flex items-center justify-center gap-3 group">
+
+              {/* View Bag shortcut – slides in after adding */}
+              <AnimatePresence>
+                {isAdded && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: "auto" }}
+                    exit={{ opacity: 0, y: -10, height: 0 }}
+                    transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+                  >
+                    <Link
+                      to="/cart"
+                      className="w-full py-5 border-2 border-stone-900 rounded-full font-black uppercase tracking-widest text-xs hover:bg-stone-950 hover:text-white transition-all flex items-center justify-center gap-3 group"
+                    >
+                      View Bag
+                      <ShoppingBag size={16} className="group-hover:scale-110 transition-transform" />
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <button className="w-full py-5 border-2 border-stone-100 rounded-full font-black uppercase tracking-widest text-xs hover:border-stone-300 transition-all flex items-center justify-center gap-3 group">
                 Add to Blueprint
                 <Heart size={18} className="group-hover:fill-primary group-hover:text-primary transition-colors" />
               </button>
