@@ -61,6 +61,7 @@ export class ProductsService {
       .select([
         'product.id',
         'product.name',
+        'product.slug',
         'product.description',
         'product.gender',
         'product.created_at',
@@ -149,11 +150,34 @@ export class ProductsService {
         'variants',
         'variants.color',
         'variants.size',
+        'images',
+        'images.color',
       ],
     });
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    return product;
+  }
+
+  async findBySlug(slug: string): Promise<Product> {
+    const product = await this.productRepository.findOne({
+      where: { slug, is_active: true },
+      relations: [
+        'brand',
+        'category',
+        'variants',
+        'variants.color',
+        'variants.size',
+        'images',
+        'images.color',
+      ],
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with slug ${slug} not found`);
     }
 
     return product;

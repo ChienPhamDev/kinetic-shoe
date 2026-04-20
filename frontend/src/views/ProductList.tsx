@@ -201,7 +201,7 @@ export default function ProductList() {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-y-16 gap-x-8">
                 {products.length > 0 ? (
                   products.map((product) => (
-                    <Link key={product.id} to={`/product/${product.id}`} className="block">
+                    <Link key={product.id} to={`/product/${product.slug}`} className="block">
                       <ProductCard product={product} />
                     </Link>
                   ))

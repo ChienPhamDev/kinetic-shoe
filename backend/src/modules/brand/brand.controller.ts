@@ -42,4 +42,3 @@ export class BrandController {
     return this.brandService.remove(id);
   }
 }
-

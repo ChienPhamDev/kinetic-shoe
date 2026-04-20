@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { Star, Heart, ChevronLeft, ChevronRight, Ruler, Loader2 } from "lucide-react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Product } from "../types";
-import { PRODUCTS } from "../constants";
+import { Product, ProductVariant } from "../types";
+import { fetchProductBySlug } from "../lib/api";
 import { cn } from "../lib/utils";
 
 interface ProductDetailProps {
@@ -11,32 +11,54 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColorId, setSelectedColorId] = useState<string>("");
   const [activeThumb, setActiveThumb] = useState(0);
 
   useEffect(() => {
-    // Simulate data fetching
-    const foundProduct = PRODUCTS.find(p => p.id === id);
-    setProduct(foundProduct || null);
-    setLoading(false);
-  }, [id]);
+    async function loadProduct() {
+      if (!slug) return;
+      try {
+        setLoading(true);
+        const data = await fetchProductBySlug(slug);
+        setProduct(data);
+        
+        // Default color selection to the first variant's color
+        if (data.variants && data.variants.length > 0) {
+          setSelectedColorId(data.variants[0].color.id);
+        }
+      } catch (err) {
+        console.error("Failed to load product:", err);
+        setError("Could not retrieve the product details.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProduct();
+  }, [slug]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary" size={48} />
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-primary" size={48} />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">Loading Blueprint</p>
+        </div>
       </div>
     );
   }
 
-  if (!product) {
+  if (error || !product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+      <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-white">
         <h2 className="text-4xl font-black uppercase tracking-tighter mb-4">Design Not Found</h2>
-        <p className="text-stone-500 mb-8 max-w-md text-center font-medium">The requested blueprint or silhouette is currently unavailable in our ecosystem.</p>
+        <p className="text-stone-500 mb-8 max-w-md text-center font-medium">
+          {error || "The requested blueprint or silhouette is currently unavailable in our ecosystem."}
+        </p>
         <Link 
           to="/shop"
           className="bg-black text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-stone-800 transition-colors"
@@ -47,18 +69,41 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
     );
   }
 
-  const displayThumbs = product.thumbnails.length > 0 ? product.thumbnails : [product.image];
+  // Filter variants by selected color
+  const colorVariants = product.variants?.filter(v => v.color.id === selectedColorId) || [];
+  const availableSizes = Array.from(new Set(colorVariants.map(v => v.size.display_label))).sort();
   
-  const nextImage = () => setActiveThumb((prev) => (prev + 1) % displayThumbs.length);
-  const prevImage = () => setActiveThumb((prev) => (prev - 1 + displayThumbs.length) % displayThumbs.length);
+  // Unique colors from variants
+  const uniqueColors = (product.variants || []).reduce((acc, v) => {
+    if (!acc.find(c => c.id === v.color.id)) {
+      acc.push(v.color);
+    }
+    return acc;
+  }, [] as any[]);
+
+  // Get current price based on selection or default
+  const activeVariant = colorVariants.find(v => v.size.display_label === selectedSize) || colorVariants[0];
+  const price = activeVariant?.price || 0;
+
+  // Images for the gallery
+  const displayImages = product.images && product.images.length > 0 
+    ? product.images.map(img => img.url)
+    : ["https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=1000"]; // Placeholder if no images
+
+  const nextImage = () => setActiveThumb((prev) => (prev + 1) % displayImages.length);
+  const prevImage = () => setActiveThumb((prev) => (prev - 1 + displayImages.length) % displayImages.length);
+
+  const categoryName = typeof product.category === 'string' 
+    ? product.category 
+    : (product.category as any)?.name || 'Collection';
 
   return (
     <main className="pt-32 pb-20 bg-white">
       <div className="max-w-[1400px] mx-auto px-8">
         <nav className="mb-12 flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
-          <Link to="/" className="hover:text-black">Home</Link>
+          <Link to="/" className="hover:text-black transition-colors">Home</Link>
           <span>/</span>
-          <Link to="/shop" className="hover:text-black">Shop</Link>
+          <Link to="/shop" className="hover:text-black transition-colors">Shop</Link>
           <span>/</span>
           <span className="text-black">{product.name}</span>
         </nav>
@@ -67,7 +112,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
           {/* Left Column: Gallery */}
           <div className="lg:col-span-7 flex gap-6">
             <div className="hidden md:flex flex-col gap-2 w-20 flex-shrink-0">
-              {displayThumbs.map((thumb, i) => (
+              {displayImages.map((url, i) => (
                 <button 
                   key={i}
                   onMouseEnter={() => setActiveThumb(i)}
@@ -76,7 +121,7 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
                     activeThumb === i ? "border-primary opacity-100" : "border-transparent opacity-40 hover:opacity-100"
                   )}
                 >
-                  <img src={thumb} className="w-full h-full object-contain" alt="" referrerPolicy="no-referrer" />
+                  <img src={url} className="w-full h-full object-contain" alt="" />
                 </button>
               ))}
             </div>
@@ -86,10 +131,9 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
                 key={activeThumb}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                src={displayThumbs[activeThumb]} 
+                src={displayImages[activeThumb]} 
                 className="w-full h-full object-contain p-12" 
                 alt={product.name} 
-                referrerPolicy="no-referrer"
               />
               
               <div className="absolute bottom-8 right-8 flex gap-3">
@@ -113,17 +157,17 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
           <div className="lg:col-span-5 flex flex-col pt-4">
             <header className="mb-10">
               <div className="flex justify-between items-start mb-4">
-                <span className="text-primary text-[10px] font-black uppercase tracking-[0.3em]">{product.category}</span>
+                <span className="text-primary text-[10px] font-black uppercase tracking-[0.3em]">{categoryName}</span>
                 <div className="flex items-center gap-1">
                   <Star size={14} className="fill-primary text-primary" />
-                  <span className="text-xs font-black">{product.rating}</span>
+                  <span className="text-xs font-black">{product.rating || 4.8}</span>
                 </div>
               </div>
               <h1 className="text-4xl md:text-5xl font-black text-stone-900 tracking-tighter uppercase mb-2 leading-none">
                 {product.name}
               </h1>
               <div className="text-2xl font-black text-stone-900 mt-4">
-                ${product.price.toFixed(2)}
+                ${Number(price).toFixed(2)}
               </div>
             </header>
 
@@ -132,6 +176,34 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
                 {product.description}
               </p>
             </div>
+
+            {/* Color Selection */}
+            {uniqueColors.length > 1 && (
+              <div className="mb-8">
+                <h3 className="text-xs font-black uppercase tracking-widest text-stone-900 mb-6">Select Color</h3>
+                <div className="flex gap-4">
+                  {uniqueColors.map((color) => (
+                    <button
+                      key={color.id}
+                      onClick={() => {
+                        setSelectedColorId(color.id);
+                        setSelectedSize(""); // Reset size when color changes
+                      }}
+                      className={cn(
+                        "w-10 h-10 rounded-full border-2 transition-all p-1",
+                        selectedColorId === color.id ? "border-primary scale-110" : "border-stone-100 hover:border-stone-300"
+                      )}
+                      title={color.name}
+                    >
+                      <div 
+                        className="w-full h-full rounded-full shadow-inner" 
+                        style={{ backgroundColor: color.hex_code }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Size Selection */}
             <div className="mb-12">
@@ -143,18 +215,18 @@ export default function ProductDetail({ onAddToCart }: ProductDetailProps) {
                 </button>
               </div>
               <div className="grid grid-cols-4 gap-3">
-                {product.sizes.map((size) => (
+                {availableSizes.map((size) => (
                   <button 
                     key={size}
                     onClick={() => setSelectedSize(size)}
                     className={cn(
                       "h-14 rounded-xl flex items-center justify-center text-sm font-black transition-all border-2",
                       selectedSize === size 
-                        ? "border-primary bg-primary text-on-primary shadow-lg shadow-primary/20" 
+                        ? "border-primary bg-primary text-white shadow-lg shadow-primary/20" 
                         : "border-stone-100 bg-white hover:border-stone-300 text-stone-500 hover:text-stone-900"
                     )}
                   >
-                    US {size}
+                    {size}
                   </button>
                 ))}
               </div>

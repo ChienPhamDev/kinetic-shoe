@@ -38,17 +38,24 @@ export interface ProductVariant {
 export interface Product {
   id: string;
   name: string;
-  brand: Brand;
+  slug: string;
+  brand?: Brand;
   category: Category | string;
   description: string;
-  gender: string;
-  variants: ProductVariant[];
+  gender?: string;
+  variants?: ProductVariant[];
   images?: { url: string; is_primary: boolean }[];
-  created_at: string;
+  created_at?: string;
   // UI helpers
   image?: string;
+  price: number;
   rating?: number;
   reviewsCount?: number;
+  thumbnails?: string[];
+  isNew?: boolean;
+  isLimited?: boolean;
+  colors?: string[];
+  sizes?: string[];
 }
 
 export interface PaginatedResponse<T> {

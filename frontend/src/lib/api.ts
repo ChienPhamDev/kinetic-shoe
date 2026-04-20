@@ -13,6 +13,11 @@ export const fetchProducts = async (params: any) => {
   return response.data;
 };
 
+export const fetchProductBySlug = async (slug: string) => {
+  const response = await axios.get<Product>(`/products/${slug}`);
+  return response.data;
+};
+
 export const fetchBrands = async () => {
   const response = await axios.get<Brand[]>("/brands");
   return response.data;

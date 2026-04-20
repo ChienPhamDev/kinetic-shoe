@@ -29,9 +29,16 @@ export class ProductsController {
     return await this.productsService.findAll(query);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.productsService.findOne(id);
+  @Get(':identifier')
+  async findOne(@Param('identifier') identifier: string) {
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        identifier,
+      );
+    if (isUuid) {
+      return this.productsService.findOne(identifier);
+    }
+    return this.productsService.findBySlug(identifier);
   }
 
   @Patch(':id')

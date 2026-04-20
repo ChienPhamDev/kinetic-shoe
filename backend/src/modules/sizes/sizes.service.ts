@@ -17,10 +17,24 @@ export class SizesService {
     return await this.sizeRepository.save(size);
   }
 
-  async findAll(): Promise<Size[]> {
-    return await this.sizeRepository.find({
-      order: { region: 'ASC', value: 'ASC' },
-    });
+  async findAvailableSizes(): Promise<Size[]> {
+    return await this.sizeRepository
+      .createQueryBuilder('size')
+      .innerJoin(
+        'product_variants',
+        'variant',
+        // 'variant.size_id = size.id AND variant.stock_quantity > 0 AND variant.is_active = true',
+        'variant.size_id = size.id AND variant.is_active = true',
+      )
+      .innerJoin(
+        'products',
+        'product',
+        'product.id = variant.product_id AND product.is_active = true',
+      )
+      .orderBy('size.region', 'ASC')
+      .addOrderBy('size.value', 'ASC')
+      .distinct(true)
+      .getMany();
   }
 
   async findOne(id: string): Promise<Size> {

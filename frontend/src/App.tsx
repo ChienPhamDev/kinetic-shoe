@@ -76,7 +76,7 @@ function AppContent() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<ProductList />} />
-              <Route path="/product/:id" element={<ProductDetail onAddToCart={addToCart} />} />
+              <Route path="/product/:slug" element={<ProductDetail onAddToCart={addToCart} />} />
               <Route path="/cart" element={
                 <Cart 
                   items={cart} 

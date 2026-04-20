@@ -4,6 +4,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "1",
     name: "KINETIC VELOCITY X1",
+    slug: "kinetic-velocity-x1",
     category: "Performance / Running",
     price: 160.0,
     rating: 4.8,
@@ -22,6 +23,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "2",
     name: "K-Series Alpha V1",
+    slug: "k-series-alpha-v1",
     category: "Performance Running",
     price: 185.0,
     rating: 4.5,
@@ -36,6 +38,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "3",
     name: "AeroFlow Elite",
+    slug: "aeroflow-elite",
     category: "Marathon Training",
     price: 210.0,
     rating: 4.0,
@@ -49,6 +52,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "4",
     name: "Vortex Sky High",
+    slug: "vortex-sky-high",
     category: "Street Culture",
     price: 245.0,
     rating: 5.0,
@@ -63,6 +67,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "5",
     name: "Zenith Minimalist",
+    slug: "zenith-minimalist",
     category: "Lifestyle",
     price: 160.0,
     rating: 4.2,
@@ -76,6 +81,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "6",
     name: "Titan Core Pro",
+    slug: "titan-core-pro",
     category: "Basketball",
     price: 195.0,
     rating: 5.0,
@@ -89,6 +95,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "7",
     name: "Cloud Runner Pro",
+    slug: "cloud-runner-pro",
     category: "Road Running",
     price: 225.0,
     rating: 4.0,
@@ -102,6 +109,7 @@ export const PRODUCTS: Product[] = [
   {
     id: "8",
     name: "Classic Street Lo",
+    slug: "classic-street-lo",
     category: "Artisan Series / Bone White",
     price: 120.0,
     rating: 4.5,

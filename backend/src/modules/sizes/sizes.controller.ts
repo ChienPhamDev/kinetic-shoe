@@ -24,7 +24,7 @@ export class SizesController {
 
   @Get()
   findAll() {
-    return this.sizesService.findAll();
+    return this.sizesService.findAvailableSizes();
   }
 
   @Get(':id')
